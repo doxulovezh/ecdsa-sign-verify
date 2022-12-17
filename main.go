@@ -33,10 +33,11 @@ type heyfoologin_msg struct {
 	Chaintype string    `json:"chaintype"`
 }
 type SignLogin struct {
-	Domain  string `json:"domain"`
-	Phone   string `json:"phone"`
-	Address string `json:"address"`
-	Message string `json:"message"`
+	Domain     string `json:"domain"`
+	Phone      string `json:"phone"`
+	Address    string `json:"address"`
+	Message    string `json:"message"`
+	Expiration int64  `json:"expiration"`
 }
 type heyfoologin_reg struct {
 	Code int    `json:"code"`
@@ -128,6 +129,15 @@ func heyfoologin(ctx iris.Context) {
 		return
 	} else {
 		var Res heyfoologin_reg
+		//失效时间检查，超过失效时间则抛弃。通常是60秒
+		fmt.Println(time.Now().Unix(), Msg.Signlogin.Expiration)
+		if time.Now().Unix() > Msg.Signlogin.Expiration {
+			Res.Code = -1
+			Res.Msg = "Time Expire"
+			bu, _ := json.Marshal(Res)
+			ctx.Write(bu)
+			return
+		}
 		puk, err := GetPubK(Msg.Publickey)
 		if err != nil {
 			Res.Code = -1
